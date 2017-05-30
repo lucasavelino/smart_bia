@@ -10,6 +10,8 @@
 
 #define SERVER_IP "164.41.222.112"
 #define SERVER_PORT "80"
+//#define SERVER_IP "192.168.0.114"
+//#define SERVER_PORT "8080"
 
 #define POST_HEADER_FORMAT  "POST %s HTTP/1.1\r\n"\
 							"Host: %s\r\n"\
@@ -44,6 +46,7 @@
 #define SERVICE_FORMAT "{ \"name\": \"%s\", "\
 					           "\"parameters\": { "
 #define PARAMETER_FORMAT "\"%s\": \"%s\""
+#define RETURN_TYPE_FORMAT "\"return_type\": \"%s\""
 #define COMMA_SPACE ", "
 #define SPACE " "
 #define CLOSE_BRACES "}"
@@ -85,7 +88,7 @@ static void Uiot_SendRequestGetResponse(uint16_t request_size){
 }
 
 uint8_t Uiot_ClientRegister(void){
-	uint32_t body_size = sizeof(CLIENT_REGISTER_BODY);
+	uint32_t body_size = sizeof(CLIENT_REGISTER_BODY)-1;
 	uint16_t request_size = snprintf(request_buffer,REQUEST_BUFFER_SIZE,
 			POST_HEADER_FORMAT,CLIENT_REGISTER_URI,BASE_URI,body_size);
 	request_size += snprintf(&request_buffer[request_size],REQUEST_BUFFER_SIZE-request_size,
@@ -115,7 +118,7 @@ void Uiot_ServiceAddParameter(service_t* service, type_t parameter_type, char* p
 uint8_t Uiot_ServiceRegister(service_t services[], uint8_t nservices){
 	uint8_t i;
 	uint16_t request_size = snprintf(request_buffer,REQUEST_BUFFER_SIZE,
-			POST_HEADER_FORMAT,SERVICE_REGISTER_URI,BASE_URI,999999);
+			POST_HEADER_FORMAT,SERVICE_REGISTER_URI,BASE_URI,999L);
 	uint16_t body_size = request_size;
 	strncpy(&request_buffer[request_size],SERVICES_INIT,sizeof(SERVICES_INIT));
 	request_size += sizeof(SERVICES_INIT);
@@ -135,8 +138,12 @@ uint8_t Uiot_ServiceRegister(service_t services[], uint8_t nservices){
 				request_size += sizeof(SPACE)-1;
 			}
 		}
-		strncpy(&request_buffer[request_size-1],CLOSE_BRACES, sizeof(CLOSE_BRACES));
-		request_size += sizeof(CLOSE_BRACES)-1;
+		strncpy(&request_buffer[request_size-1],CLOSE_BRACES COMMA_SPACE, sizeof(CLOSE_BRACES COMMA_SPACE));
+		request_size += sizeof(CLOSE_BRACES COMMA_SPACE)-1;
+		request_size += snprintf(&request_buffer[request_size-1],
+				REQUEST_BUFFER_SIZE, RETURN_TYPE_FORMAT, TYPE_AS_STR(services[i].return_type));
+		strncpy(&request_buffer[request_size-1],SPACE CLOSE_BRACES, sizeof(SPACE CLOSE_BRACES));
+		request_size += sizeof(SPACE CLOSE_BRACES)-1;
 		if(i < nservices-1){
 			strncpy(&request_buffer[request_size-1],COMMA_SPACE, sizeof(COMMA_SPACE));
 			request_size += sizeof(COMMA_SPACE)-1;
@@ -147,11 +154,11 @@ uint8_t Uiot_ServiceRegister(service_t services[], uint8_t nservices){
 		}
 	}
 	request_size += snprintf(&request_buffer[request_size-1],REQUEST_BUFFER_SIZE,MESSAGE_FOOTER_FORMAT,token);
-	char *pch, aux_str[7];
-	body_size = request_size - body_size;
-	snprintf(aux_str, 7, "%6d", body_size);
-	pch = strstr(request_buffer,"999999\r\n");
-	memcpy(pch,aux_str,6);
+	char *pch, aux_str[4];
+	body_size = request_size - body_size + 1;
+	snprintf(aux_str, 4, "%d", body_size);
+	pch = strstr(request_buffer,"999\r\n");
+	memcpy(pch,aux_str,3);
 	Uiot_SendRequestGetResponse(request_size);
 	Json_FilterInt(CODE_KEY,sizeof(CODE_KEY)-1,&response_code);
 	if(response_code != 200){
