@@ -17,8 +17,8 @@ int main(void) {
 	Esp8266_Init();
 
 	Uiot_ClientRegister();
-	Uiot_ServiceInit(services, "GetImpedance", UINT16_T);
-	Uiot_ServiceAddParameter(services,UINT16_T,"id");
+	Uiot_ServiceInit(services, "GetImpedance", FLOAT);
+	Uiot_ServiceAddParameter(services,FLOAT,"example_parameter");
 	Uiot_ServiceRegister(services,1);
 	while(1){}
 }

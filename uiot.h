@@ -5,6 +5,7 @@
 
 #define NAME_SIZE 50
 #define PARAMETERS_SIZE 5
+#define SERVICEID_SIZE 10
 
 typedef enum {
 	INT32_T,
@@ -25,6 +26,7 @@ typedef struct {
 	parameter_t parameters[PARAMETERS_SIZE];
 	uint8_t parameters_count;
 	type_t return_type;
+	char service_id[SERVICEID_SIZE];
 }service_t;
 
 uint8_t Uiot_ClientRegister(void);

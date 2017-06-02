@@ -10,20 +10,19 @@
 
 #define SERVER_IP "164.41.222.112"
 #define SERVER_PORT "80"
-//#define SERVER_IP "192.168.0.114"
-//#define SERVER_PORT "8080"
 
 #define POST_HEADER_FORMAT  "POST %s HTTP/1.1\r\n"\
 							"Host: %s\r\n"\
 							"Accept: application/json\r\n"\
 							"Content-Length: %ld\r\n"\
 							"Content-Type: application/json\r\n"\
-							"User-Agent: msp430iot/0.1\r\n\r\n"
+							"User-Agent: msp430iot/0.1\r\n"\
+							"Accept-Language: pt-BR,pt;q=0.8,en-US;q=0.6,en;q=0.4\r\n\r\n"
 
 #define BASE_URI "homol.redes.unb.br"
 #define CLIENT_REGISTER_URI "/uiot-raise/client/register/"
 #define CLIENT_LIST_URI "/uiot-raise/client/list/"
-#define SERVICE_REGISTER_URI "/uiot-raise/service/register?type=true"
+#define SERVICE_REGISTER_URI "/uiot-raise/service/register/?type=true"
 #define SERVICE_LIST_URI "/uiot-raise/service/list/"
 #define DATA_REGISTER_URI "/uiot-raise/data/register/"
 #define DATA_LIST_URI "/uiot-raise/data/list/"
@@ -41,6 +40,7 @@
 
 #define CODE_KEY "\"code\""
 #define TOKEN_KEY "\"tokenId\""
+#define SERVICE_ID "\"service_id\""
 
 #define SERVICES_INIT "{ \"services\": [ "
 #define SERVICE_FORMAT "{ \"name\": \"%s\", "\
@@ -71,8 +71,8 @@ static int16_t response_buffer_count = 0;
 static uint16_t response_code;
 static char token[TOKEN_SIZE];
 
-static uint8_t Json_FilterInt(char* key, uint16_t key_size, uint16_t* value);
-static uint8_t Json_FilterStr(char* key, uint16_t key_size, char* value);
+static uint8_t Json_FilterInt(char* key, uint16_t* value);
+static uint16_t Json_FilterStr(char* key, char* value, uint16_t pos);
 static void Uiot_SendRequestGetResponse(uint16_t request_size);
 
 static void Uiot_SendRequestGetResponse(uint16_t request_size){
@@ -94,11 +94,11 @@ uint8_t Uiot_ClientRegister(void){
 	request_size += snprintf(&request_buffer[request_size],REQUEST_BUFFER_SIZE-request_size,
 			CLIENT_REGISTER_BODY);
 	Uiot_SendRequestGetResponse(request_size);
-	Json_FilterInt(CODE_KEY,sizeof(CODE_KEY)-1,&response_code);
+	Json_FilterInt(CODE_KEY,&response_code);
 	if(response_code != 200){
 		return 0;
 	}
-	Json_FilterStr(TOKEN_KEY,sizeof(TOKEN_KEY)-1,token);
+	Json_FilterStr(TOKEN_KEY,token,0);
 	return 1;
 }
 
@@ -155,23 +155,34 @@ uint8_t Uiot_ServiceRegister(service_t services[], uint8_t nservices){
 	}
 	request_size += snprintf(&request_buffer[request_size-1],REQUEST_BUFFER_SIZE,MESSAGE_FOOTER_FORMAT,token);
 	char *pch, aux_str[4];
-	body_size = request_size - body_size + 1;
+	body_size = request_size - body_size -1;
 	snprintf(aux_str, 4, "%d", body_size);
 	pch = strstr(request_buffer,"999\r\n");
 	memcpy(pch,aux_str,3);
 	Uiot_SendRequestGetResponse(request_size);
-	Json_FilterInt(CODE_KEY,sizeof(CODE_KEY)-1,&response_code);
+	Json_FilterInt(CODE_KEY,&response_code);
 	if(response_code != 200){
 		return 0;
+	}
+	uint16_t pos_resp_buf = 0;
+	for (i = 0; i < nservices; ++i) {
+		pos_resp_buf = Json_FilterStr(SERVICE_ID,services[i].service_id,pos_resp_buf);
 	}
 	return 1;
 }
 
-static uint8_t Json_FilterInt(char* key, uint16_t key_size, uint16_t* value){
+static uint8_t Json_FilterInt(char* key, uint16_t* value){
 	char* foundkey;
+	*value = 0;
 	foundkey = strstr(response_buffer,key);
 	if(foundkey != 0){
-		foundkey = foundkey+key_size;
+		while(*foundkey != ':'){
+			foundkey++;
+		}
+		foundkey++;
+		while(*foundkey == ' ' || *foundkey == '\t'){
+			foundkey++;
+		}
 		while(foundkey < (response_buffer+RESPONSE_BUFFER_SIZE)){
 			if(*foundkey < '0' || *foundkey > '9'){
 				foundkey++;
@@ -185,20 +196,30 @@ static uint8_t Json_FilterInt(char* key, uint16_t key_size, uint16_t* value){
 	return 0;
 }
 
-static uint8_t Json_FilterStr(char* key, uint16_t key_size, char* value){
+static uint16_t Json_FilterStr(char* key, char* value, uint16_t pos){
 	char* foundkey;
-	foundkey = strstr(response_buffer,key);
+	foundkey = strstr(response_buffer+pos,key);
 	if(foundkey != 0){
-		foundkey = foundkey+key_size;
-		while(foundkey < (response_buffer+RESPONSE_BUFFER_SIZE)){
-			if(*foundkey != '"'){
-				foundkey++;
+		while(*foundkey != ':'){
+			foundkey++;
+		}
+		foundkey++;
+		while(*foundkey == ' ' || *foundkey == '\t'){
+			foundkey++;
+		}
+
+		if(*foundkey == '"'){
+			foundkey++;
+			sscanf(foundkey,"%[^\"]s",value);
+			return (uint16_t) (foundkey + strlen(value) + 1 - response_buffer);
+		}
+		else{
+			int j = 0;
+			while(*(foundkey+j) >= '0' && *(foundkey+j) <= '9'){
+				value[j] = *(foundkey + j);
+				j++;
 			}
-			else{
-				foundkey++;
-				sscanf(foundkey,"%[^\"]s",value);
-				return 1;
-			}
+			return (uint16_t) (foundkey + j + 1 - response_buffer);
 		}
 	}
 	return 0;
