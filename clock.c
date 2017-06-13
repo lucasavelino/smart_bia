@@ -13,3 +13,16 @@ void Clock_Init_16MHz(void){
 
 	__delay_cycles(500000);
 }
+
+//void Clock_Init_16MHz(void){
+//	UCSCTL0 = 0x00;
+//	UCSCTL1 = DCORSEL_5;
+//	UCSCTL2 = FLLD__4 | 3;
+//	UCSCTL3 = SELREF__XT2CLK;
+//	UCSCTL4 = SELA__XT1CLK |
+//			  SELS__DCOCLK |
+//			  SELM__DCOCLK;
+//	UCSCTL5 = 0x00;
+//
+//	__delay_cycles(500000);
+//}

@@ -18,25 +18,13 @@ static inline void Wait_1ms(void){
 	__low_power_mode_0();
 }
 
-void PWM_Init(enum pwm_frequency_t freq, uint8_t duty_cicle){
-	uint16_t frequency = 0;
-	switch(freq){
-		case F100:
-			frequency = 327;
-			break;
-		case F1000:
-			frequency = 32;
-		default:
-			break;
-	}
-	TA1EX0 = 0;
-	TA1CCR0 = frequency;
-	TA1CCR1 = (duty_cicle * frequency)/100;
-	TA1CTL = TACLR;
-	TA1CTL |= TASSEL__ACLK | MC__UP;
-	TA1CCTL1 = OUTMOD_7;
-	P2DIR |= BIT0;
-	P2SEL |= BIT0;
+void Timer0_Start1MHzSquareWave(void){
+	TA0EX0 = 0;
+	TA0CCR0 = 16;
+	TA0CCR1 = 8;
+	TA0CTL = TACLR;
+	TA0CTL |= TASSEL__SMCLK | MC__UP;
+	TA0CCTL1 = OUTMOD_7;
 }
 
 #pragma vector=TIMER1_A1_VECTOR
