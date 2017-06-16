@@ -5,7 +5,6 @@
 
 void Acquisition_Trigger(uint16_t* dest_vector, uint16_t total_samples){
 	Input_Wait();
-	Timer0_Start1MHzSquareWave();
 	ADC12_StartConversion(dest_vector, total_samples);
 	ADC12_StopConversion();
 }

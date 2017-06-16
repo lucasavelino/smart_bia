@@ -10,7 +10,7 @@
 #include "adc.h"
 #include "acquisition.h"
 
-#define NUMBER_SAMPLES 500
+#define NUMBER_SAMPLES 200
 
 service_t services[1];
 
@@ -20,21 +20,18 @@ int main(void) {
     Watchdog_Stop();
     Clock_Init_16MHz();
     AD9850_Init();
-//	Input_Init();
-//	ADC12_Init();
-//	Esp8266_Init();
-
-	//P2DIR |= BIT2;
-	//P2SEL |= BIT2;
+    ADC12_Init();
+	Input_Init();
+	Esp8266_Init();
 
 
-    AD9850_SetFreq(50000,0);
+    AD9850_SetFreq(5000,0);
 
     Acquisition_Trigger(samples, NUMBER_SAMPLES);
 
-//	Uiot_ClientRegister();
-//	Uiot_ServiceInit(services, "GetImpedance", FLOAT);
-//	Uiot_ServiceAddParameter(services,FLOAT,"example_parameter");
-//	Uiot_ServiceRegister(services,1);
+	Uiot_ClientRegister();
+	Uiot_ServiceInit(services, "GetImpedance", FLOAT);
+	Uiot_ServiceAddParameter(services,FLOAT,"example_parameter");
+	Uiot_ServiceRegister(services,1);
 	while(1){}
 }

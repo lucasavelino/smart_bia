@@ -18,15 +18,6 @@ static inline void Wait_1ms(void){
 	__low_power_mode_0();
 }
 
-void Timer0_Start1MHzSquareWave(void){
-	TA0EX0 = 0;
-	TA0CCR0 = 16;
-	TA0CCR1 = 8;
-	TA0CTL = TACLR;
-	TA0CTL |= TASSEL__SMCLK | MC__UP;
-	TA0CCTL1 = OUTMOD_7;
-}
-
 #pragma vector=TIMER1_A1_VECTOR
 __interrupt void timer1_a1_isr(void){
 	volatile uint16_t flags = TA1IV;

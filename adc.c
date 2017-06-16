@@ -9,15 +9,16 @@ static uint16_t total_samples;
 void ADC12_Init(){
 	ADC12CTL0 &= ~ADC12ENC; 	//Disabling conversion to configure ADC12
 	REFCTL0 &= ~REFMSTR;		//Reference system controlled by control bits inside the ADC12
-	ADC12CTL0 |= ADC12SHT0_0 | ADC12ON | ADC12REFON;
+	ADC12CTL0 |= ADC12SHT0_0 | ADC12ON | ADC12REFON | ADC12MSC;
 								//sampling-and-hold time => 4 ADC12CLK cycles + 13 cycles = 17 cycles
 								//ADC12_A on
+								//ADC12 reference on
+								//Multiple sample-and-conversion. As quickly as possible.
 	ADC12CTL0 &= ~ADC12REF2_5V; //ADC12_A reference generator voltage on - 1.5V
-	ADC12CTL1 |= ADC12SSEL_3 | ADC12SHP | ADC12CONSEQ_2 | ADC12SHS_1;
-							//ADC12_A clock source => SMCLK
-							//ADC12_A Sampcon signal => sampling timer
-							//Repeat single channel coversion mode selected
-							//Sampling timer => Output of TA0.1
+	ADC12CTL1 = ADC12SSEL_0 | ADC12CONSEQ_2 | ADC12SHP;
+							//ADC12_A clock source => ADCOSC
+							//Repeat single channel conversion mode selected
+							//SAMPCON from sampling timer -> to enable multiple sample-and-conversion
 	ADC12CTL2 |= ADC12RES_2 | ADC12TCOFF;
 							//12 bit of resolution
 							//Temperature sensor off
@@ -26,13 +27,14 @@ void ADC12_Init(){
     						//V(R+) = VREF+ and V(R-) = AVSS
     						//A0 channel selected
     ADC12IE = ADC12IE0;
+    						//ADC12 interrupt enable in channel zero
 }
 
 void ADC12_StartConversion(uint16_t* dest, uint16_t total){
 	sample_count=0;
 	result_addr = dest;
 	total_samples = total;
-	ADC12CTL0 |= ADC12ENC;
+	ADC12CTL0 |= ADC12ENC | ADC12SC;
 	__low_power_mode_0();
 }
 
@@ -54,6 +56,8 @@ __interrupt void Adc12_Isr(void){
 			sample_count++;
 			if(sample_count >= total_samples){
 				sample_count = 0;
+				ADC12IE &= ~ADC12IE0;
+				ADC12CTL0 &= ~ADC12ENC;
 				__low_power_mode_off_on_exit();
 			}
 			break;
