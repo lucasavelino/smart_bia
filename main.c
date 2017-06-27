@@ -81,13 +81,14 @@ int main(void) {
 	Input_Init();
 	Esp8266_Init();
 
+	Uiot_ClientRegister();
+	Uiot_ServiceInit(services, "GetImpedance", FLOAT);
+	Uiot_ServiceAddParameter(services,FLOAT,"example_parameter");
+	Uiot_ServiceRegister(services,1);
 	AD9850_SetFreq(5000,0);
+
 	while(1) {
 		Acquisition_Trigger(samples, NUMBER_SAMPLES);
-		Uiot_ClientRegister();
-		Uiot_ServiceInit(services, "GetImpedance", FLOAT);
-		Uiot_ServiceAddParameter(services,FLOAT,"example_parameter");
-		Uiot_ServiceRegister(services,1);
 		for (i = 0; i < NUMBER_TEST_VALUES; ++i) {
 			Uiot_DataRegister(services[0].service_id, &test_values[i]);
 		}
