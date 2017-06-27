@@ -9,6 +9,7 @@
 #include "input.h"
 #include "adc.h"
 #include "acquisition.h"
+#include "leds.h"
 
 #define NUMBER_SAMPLES 200
 #define NUMBER_TEST_VALUES 50
@@ -76,17 +77,19 @@ int main(void) {
     Clock_Init_16MHz();
     AD9850_Init();
     ADC12_Init();
+    Leds_Init();
 	Input_Init();
 	Esp8266_Init();
 
 	AD9850_SetFreq(5000,0);
-	Acquisition_Trigger(samples, NUMBER_SAMPLES);
-	Uiot_ClientRegister();
-	Uiot_ServiceInit(services, "GetImpedance", FLOAT);
-	Uiot_ServiceAddParameter(services,FLOAT,"example_parameter");
-	Uiot_ServiceRegister(services,1);
-	for (i = 0; i < NUMBER_TEST_VALUES; ++i) {
-		Uiot_DataRegister(services[0].service_id, &test_values[i]);
+	while(1) {
+		Acquisition_Trigger(samples, NUMBER_SAMPLES);
+		Uiot_ClientRegister();
+		Uiot_ServiceInit(services, "GetImpedance", FLOAT);
+		Uiot_ServiceAddParameter(services,FLOAT,"example_parameter");
+		Uiot_ServiceRegister(services,1);
+		for (i = 0; i < NUMBER_TEST_VALUES; ++i) {
+			Uiot_DataRegister(services[0].service_id, &test_values[i]);
+		}
 	}
-	__low_power_mode_3();
 }
