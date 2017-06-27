@@ -56,6 +56,18 @@
 	    						"\"client_time\": 2019915672, "\
 								"\"tag\": [] "\
 								"}"
+#define DATA_REGISTER_MESSAGE_FORMAT "{ \"token\": \"%s\", "\
+							    	   "\"client_time\": 2019915673, "\
+									   "\"tag\": [], "\
+									   "\"data\": [ "\
+									   "{ "\
+									   	   "\"service_id\": %s, "\
+										   "\"data_values\": { "\
+									   		   "\"magnitude\": %f "\
+										   "} "\
+									   "} "\
+									   "] "\
+									 "}"
 
 #define TYPE_AS_STR(t) (t == INT32_T ? "int32_t" : \
 					   (t == UINT32_T ? "uint32_t" : \
@@ -167,6 +179,26 @@ uint8_t Uiot_ServiceRegister(service_t services[], uint8_t nservices){
 	uint16_t pos_resp_buf = 0;
 	for (i = 0; i < nservices; ++i) {
 		pos_resp_buf = Json_FilterStr(SERVICE_ID,services[i].service_id,pos_resp_buf);
+	}
+	return 1;
+}
+
+
+uint8_t Uiot_DataRegister(char* service_id, void* data){
+	uint16_t request_size = snprintf(request_buffer,REQUEST_BUFFER_SIZE,
+			POST_HEADER_FORMAT,DATA_REGISTER_URI,BASE_URI,999L);
+	uint16_t body_size = request_size;
+	request_size += snprintf(&request_buffer[request_size], REQUEST_BUFFER_SIZE,
+			DATA_REGISTER_MESSAGE_FORMAT, token, service_id, *((float *)data));
+	char *pch, aux_str[4];
+	body_size = request_size - body_size;
+	snprintf(aux_str, 4, "%d", body_size);
+	pch = strstr(request_buffer,"999\r\n");
+	memcpy(pch,aux_str,3);
+	Uiot_SendRequestGetResponse(request_size);
+	Json_FilterInt(CODE_KEY,&response_code);
+	if(response_code != 200){
+		return 0;
 	}
 	return 1;
 }

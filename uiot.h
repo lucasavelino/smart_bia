@@ -33,5 +33,6 @@ uint8_t Uiot_ClientRegister(void);
 void Uiot_ServiceInit(service_t* service, char* service_name, type_t return_type);
 void Uiot_ServiceAddParameter(service_t* service, type_t parameter_type, char* parameter_name);
 uint8_t Uiot_ServiceRegister(service_t services[], uint8_t nservices);
+uint8_t Uiot_DataRegister(char* service_id, void* data);
 
 #endif /* UIOT_H_ */
