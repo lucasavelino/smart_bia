@@ -26,14 +26,13 @@ void ADC12_Init(){
     						//End-of-sequence
     						//V(R+) = VREF+ and V(R-) = AVSS
     						//A0 channel selected
-    ADC12IE = ADC12IE0;
-    						//ADC12 interrupt enable in channel zero
 }
 
 void ADC12_StartConversion(uint16_t* dest, uint16_t total){
 	sample_count=0;
 	result_addr = dest;
 	total_samples = total;
+    ADC12IE = ADC12IE0;          //ADC12 interrupt enable in channel zero
 	ADC12CTL0 |= ADC12ENC | ADC12SC;
 	__low_power_mode_0();
 }

@@ -87,9 +87,9 @@ int main(void) {
 	Uiot_ServiceRegister(services,1);
 	AD9850_SetFreq(5000,0);
 
-	while(1) {
-		Acquisition_Trigger(samples, NUMBER_SAMPLES);
+	while(1){
 		for (i = 0; i < NUMBER_TEST_VALUES; ++i) {
+			Acquisition_Trigger(samples, NUMBER_SAMPLES);
 			Uiot_DataRegister(services[0].service_id, &test_values[i]);
 		}
 	}

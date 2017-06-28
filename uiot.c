@@ -63,7 +63,7 @@
 									   "{ "\
 									   	   "\"service_id\": %s, "\
 										   "\"data_values\": { "\
-									   		   "\"magnitude\": %f "\
+									   		   "\"valor\": %f "\
 										   "} "\
 									   "} "\
 									   "] "\
